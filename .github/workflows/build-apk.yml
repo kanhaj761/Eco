@@ -1,0 +1,41 @@
+name: Build EcoTrack APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Add Android Platform
+        run: npx cap add android || true
+
+      - name: Generate Assets
+        run: npx capacitor-assets generate --android --iconBackgroundColor '#04130b' --iconBackgroundColorDark '#04130b' --splashBackgroundColor '#04130b' --splashBackgroundColorDark '#04130b' || true
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build Debug APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcoTrack-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
